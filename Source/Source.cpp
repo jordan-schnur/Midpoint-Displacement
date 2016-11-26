@@ -23,8 +23,7 @@ struct Camera {
 	/**
 	Update the camera based on input. Finally recalculate the Camera(View) matrix based on the X offset.
 
-	@param The window class, kept in Stormcloud. Used to seperate code from the Stormcloud class.
-	@return void
+	@param Window The window class, kept in Stormcloud. Used to seperate code from the Stormcloud class.
 	*/
 	void update(GLFWwindow* Window) {
 		if (glfwGetKey(Window, GLFW_KEY_A) == GLFW_PRESS) {
@@ -64,27 +63,28 @@ public:
 		//Our first line. The line the algorithm will use.
 		lines.push_back(line(glm::vec2(0.0f, 288.0f), glm::vec2(1024.0f*2, 288.0f)));
 	}
-	/**
 
-	Dynamicly generate a float array from our vector of lines.
+	/**
+		Dynamicly generate a float array from our vector of lines.
+
 	*/
-	void addLines() {
-		float *verts = new float[lines.size() * 4]; //Dynamicly create a float array with size of lines vector * 4 vertices
+	void linesToVertices() {
+		std::vector<float> verts = std::vector<float>(); //Dynamicly create a float array with size of lines vector * 4 vertices
 		for (int i = 0; i < lines.size(); i++) {
-			verts[i * 4] = lines[i].pointA.x;
-			verts[(i * 4) + 1] = lines[i].pointA.y;
-			verts[(i * 4) + 2] = lines[i].pointB.x;
-			verts[(i * 4) + 3] = lines[i].pointB.y;
+			verts.push_back(lines[i].pointA.x);
+			verts.push_back(lines[i].pointA.y);
+			verts.push_back(lines[i].pointB.x);
+			verts.push_back(lines[i].pointB.y);
 		}
 		glUseProgram(p);
 		glBindBuffer(GL_ARRAY_BUFFER, vb);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*(lines.size() * 4), verts, GL_DYNAMIC_DRAW); //Assign the data to the ArrayBuffer
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*(lines.size() * 4), &verts[0], GL_DYNAMIC_DRAW); //Assign the data to the ArrayBuffer
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		delete verts; //Delete dynamic array for cleanup
 	}
-	/**
 
-	The acutal midpoint displacement method.
+	/**
+		The acutal midpoint displacement method.
+
 	*/
 	void midpointDisplacement(int max, int res) {
 		for (int i = 0; i < res; i++) { //
@@ -104,11 +104,12 @@ public:
 			max /= 2;
 			for (int j = 0; j < tempLines.size(); j++) { lines.push_back(tempLines[j]); }
 		}
-		addLines();
+		linesToVertices();
 	}
-	/**
 
+	/**
 		The main game loop. Run from Stormcloud.
+
 	*/
 	virtual void MainLoop() {
 		Camera cam;
@@ -119,11 +120,11 @@ public:
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			cam.update(Window); //Update camera. Deals with movement. 
 			/**
-			
 				OpenGL Code:
 				Bind the vertex array and program. Enable the attributes and define them.
 				Nexr send the Orthographic matrix and the Camera(View) matrix to the GPU.
 				Finally, draw the lines based on the amount of lines * 4 vertices.
+
 			*/
 			glBindVertexArray(va);
 			glUseProgram(p);
